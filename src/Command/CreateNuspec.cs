@@ -186,6 +186,15 @@ namespace DXLocalizationNugetGenerator.Command
             text = text.Replace("/net5.0-windows/", "/net5.0-windows7.0/");
             text = text.Replace("\"net5.0-windows\"", "\"net5.0-windows7.0\"");
 
+            text = text.Replace("/net6.0-windows/", "/net6.0-windows7.0/");
+            text = text.Replace("\"net6.0-windows\"", "\"net6.0-windows7.0\"");
+
+            text = text.Replace("/net8.0-windows/", "/net8.0-windows7.0/");
+            text = text.Replace("\"net8.0-windows\"", "\"net8.0-windows7.0\"");
+
+            text = text.Replace("/net9.0-windows/", "/net9.0-windows7.0/");
+            text = text.Replace("\"net9.0-windows\"", "\"net9.0-windows7.0\"");
+
             return text;
         }
 
