@@ -17,7 +17,8 @@ namespace DXLocalizationNugetGenerator.Command
         public CreateNuspec() : base()
         {
             HasRequiredOption("inputDXNuGetPath=", "The full path of the directory that contains DevExpress nuget packages.", t => NugetPackagesPath = t);
-            HasRequiredOption("inputLocalizationPath=", "The full path of DevExpress localization libraries.", t => LocalizationDllPath = t);
+            HasRequiredOption("inputLocalizationNetFrameworkPath=", "The full path of DevExpress localization libraries.", t => LocalizationDllPathNetFramework = t);
+            HasRequiredOption("inputLocalizationNetCorePath=", "The full path of DevExpress localization libraries.", t => LocalizationDllPathNetCore = t);
             HasRequiredOption("outputLanguageCode=", "The two-letter language code.", t => LanguageCode = t);
             HasRequiredOption("outputNuspecPath=", "The output nuspec path.", t => OutputNuspecPath = t);
         }
@@ -44,7 +45,15 @@ namespace DXLocalizationNugetGenerator.Command
         /// <value>
         /// The localization DLL path.
         /// </value>
-        public string LocalizationDllPath { get; set; }
+        public string LocalizationDllPathNetFramework { get; set; }
+
+        /// <summary>
+        /// Gets or sets the localization DLL path.
+        /// </summary>
+        /// <value>
+        /// The localization DLL path.
+        /// </value>
+        public string LocalizationDllPathNetCore { get; set; }
 
         /// <summary>
         /// Gets or sets the nuget packages path.
@@ -76,7 +85,7 @@ namespace DXLocalizationNugetGenerator.Command
                 return 0;
             }
 
-            CreateNuspecFiles(packages, LocalizationDllPath, OutputNuspecPath, LanguageCode);
+            CreateNuspecFiles(packages, LocalizationDllPathNetFramework, LocalizationDllPathNetCore, OutputNuspecPath, LanguageCode);
 
             return 0;
         }
@@ -88,9 +97,14 @@ namespace DXLocalizationNugetGenerator.Command
                 Directory.CreateDirectory(OutputNuspecPath);
             }
 
-            if (!Directory.Exists(LocalizationDllPath))
+            if (!Directory.Exists(LocalizationDllPathNetFramework))
             {
-                throw new DirectoryNotFoundException("Directory with localization libraries does not exist.");
+                throw new DirectoryNotFoundException("Directory with localization .net framework libraries does not exist.");
+            }
+
+            if (!Directory.Exists(LocalizationDllPathNetCore))
+            {
+                throw new DirectoryNotFoundException("Directory with localization .net core libraries does not exist.");
             }
 
             if (!Directory.Exists(NugetPackagesPath))
@@ -107,7 +121,7 @@ namespace DXLocalizationNugetGenerator.Command
             return files;
         }
 
-        void CreateNuspecFiles(string[] nugetPackages, string localizationLibrariesPath, string outputDirectory, string languageCode)
+        void CreateNuspecFiles(string[] nugetPackages, string localizationLibrariesNetFrameworkPath, string localizationLibrariesNetCorePath, string outputDirectory, string languageCode)
         {
             foreach (string nugetPackage in nugetPackages)
             {
@@ -144,9 +158,14 @@ namespace DXLocalizationNugetGenerator.Command
                  */
                 foreach (var dlllibEntry in dlllibEntryList)
                 {
+
+                    var dllDirectory = dlllibEntry.FullName.StartsWith("lib/net462") ?
+                        localizationLibrariesNetFrameworkPath :
+                        localizationLibrariesNetCorePath;
+
                     XmlFile xmlFile = new XmlFile()
                     {
-                        Src = Path.Combine(Path.GetRelativePath(OutputNuspecPath, localizationLibrariesPath), dlllibEntry.Name),
+                        Src = Path.Combine(Path.GetRelativePath(OutputNuspecPath, dllDirectory), dlllibEntry.Name),
                         Target = dlllibEntry.FullName,
                     };
                     root.XmlFiles.Add(xmlFile);
