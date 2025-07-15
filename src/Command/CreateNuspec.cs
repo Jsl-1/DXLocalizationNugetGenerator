@@ -21,6 +21,7 @@ namespace DXLocalizationNugetGenerator.Command
             HasRequiredOption("inputLocalizationNetCorePath=", "The full path of DevExpress localization libraries.", t => LocalizationDllPathNetCore = t);
             HasRequiredOption("outputLanguageCode=", "The two-letter language code.", t => LanguageCode = t);
             HasRequiredOption("outputNuspecPath=", "The output nuspec path.", t => OutputNuspecPath = t);
+            HasOption("r|revision=", "The revision version number of the package.", t => Revision = Int32.Parse(t));
         }
 
         #region CONSTANTS
@@ -70,6 +71,12 @@ namespace DXLocalizationNugetGenerator.Command
         /// The language code.
         /// </value>
         public string LanguageCode { get; set; }
+
+        /// <summary>
+        /// Get or set the minor version added to the package.
+        /// Allow to update translation without changing devexpress version.
+        /// </summary>
+        public Int32? Revision { get; set; }
 
         #endregion PARAMETERS
 
@@ -143,7 +150,7 @@ namespace DXLocalizationNugetGenerator.Command
                 /*
                  * Prepare new nuspec filename and path.
                  */
-                string nuspecFileLocalizedName = ReplaceLanguage(nuspecFile.Name, languageCode);
+                string nuspecFileLocalizedName = _ReplaceLanguage(nuspecFile.Name, languageCode);
                 string nuspecFileLocalizedPath = Path.Combine(OutputNuspecPath, nuspecFileLocalizedName);
 
                 /*
@@ -188,20 +195,44 @@ namespace DXLocalizationNugetGenerator.Command
 
                 XmlDocument doc = new XmlDocument();
                 doc.Load(nuspecFileLocalizedPath);
-                
+
+                // Gérer l'espace de noms par défaut
+                XmlNamespaceManager nsmgr = new XmlNamespaceManager(doc.NameTable);
+                nsmgr.AddNamespace("ns", "http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd");
+
                 if (dlllibEntryList.Any())
                 {
                     doc["package"].InnerXml = doc["package"].InnerXml + filesElementToXml;
                 }
+
+                //Gère la version du package
+                var versionElement = doc.SelectSingleNode("//ns:metadata/ns:version", nsmgr) as XmlElement;
+                var devExpressVersion = new Version(versionElement.InnerText);
+                var localizationPackageVersion = devExpressVersion;
                 
-                doc.InnerXml = ReplaceLanguage(doc.InnerXml, LanguageCode);
-                doc.InnerXml = FixNet50(doc.InnerXml);
+              
+                if (Revision.HasValue)
+                {
+                   
+                    var newVersion = new Version(localizationPackageVersion.Major, localizationPackageVersion.Minor, localizationPackageVersion.Build, Revision.Value);
+                    versionElement.InnerText = newVersion.ToString();
+                    localizationPackageVersion = newVersion;
+                }
+
+                _ReplaceLanguage(doc, nsmgr, LanguageCode);
+                _FixNet50(doc);
+                _ReplaceLocalizationPackageVersions(doc, nsmgr, LanguageCode, localizationPackageVersion);
+                _ReplaceDevExpressDependencyVersions(doc, nsmgr, LanguageCode, devExpressVersion);
+
+
                 doc.Save(nuspecFileLocalizedPath);
             }
         }
 
-        private string FixNet50(string text)
+        private void _FixNet50(XmlDocument doc)
         {
+            var text = doc.InnerXml;
+
             text = text.Replace("/net5.0-windows/", "/net5.0-windows7.0/");
             text = text.Replace("\"net5.0-windows\"", "\"net5.0-windows7.0\"");
 
@@ -214,10 +245,49 @@ namespace DXLocalizationNugetGenerator.Command
             text = text.Replace("/net9.0-windows/", "/net9.0-windows7.0/");
             text = text.Replace("\"net9.0-windows\"", "\"net9.0-windows7.0\"");
 
-            return text;
+            doc.InnerXml = text;
         }
 
-        string ReplaceLanguage(string text, string language)
+        private void _ReplaceLocalizationPackageVersions(XmlDocument doc, XmlNamespaceManager nsmgr, string language, Version packageVersion)
+        {
+            if (Revision.HasValue)
+            {
+                //Find all dependency nodes in the nuspec file with id ending with the language code
+                XmlElement root = doc.DocumentElement;
+                var dependencies = root.SelectNodes($"//ns:dependency", nsmgr);
+                foreach (var node in dependencies.OfType<XmlElement>())
+                {
+                    var id = node.GetAttribute("id");
+                    if (!String.IsNullOrWhiteSpace(id) && id.EndsWith($".{language}"))
+                    {
+                        node.SetAttribute("version", $"[{packageVersion}]");
+                    }
+                }
+            }
+        }
+
+        private void _ReplaceDevExpressDependencyVersions(XmlDocument doc, XmlNamespaceManager nsmgr, string language, Version devExpressVersion)
+        {
+            if (Revision.HasValue)
+            {
+                //Find all dependency nodes in the nuspec file with id ending with the language code
+                XmlElement root = doc.DocumentElement;
+                var dependencies = root.SelectNodes($"//ns:dependency", nsmgr);
+                foreach (var node in dependencies.OfType<XmlElement>())
+                {
+                    var id = node.GetAttribute("id");
+                    if (!String.IsNullOrWhiteSpace(id) && !id.EndsWith($".{language}"))
+                    {
+                        //On rend le package compatiblie avec toutes les hot fix et mise à jour mineures
+                        var nextDevExpressVersion = new Version(devExpressVersion.Major, devExpressVersion.Minor + 1);
+                        var newVersionString = $"[{devExpressVersion},{nextDevExpressVersion})";
+                        node.SetAttribute ("version", newVersionString );
+                    }
+                }
+            }
+        }
+
+        private String _ReplaceLanguage(string text, string language)
         {
             // .de.
             text = text.Replace("." + DEFAULT_INPUT_LANGUAGE + ".", "." + language + ".");
@@ -229,7 +299,13 @@ namespace DXLocalizationNugetGenerator.Command
             text = text.Replace("/" + DEFAULT_INPUT_LANGUAGE + "/", "/" + language + "/");
             // >de<
             text = text.Replace(">" + DEFAULT_INPUT_LANGUAGE + "<", ">" + language + "<");
+
             return text;
+        }
+
+        void _ReplaceLanguage(XmlDocument doc, XmlNamespaceManager nsmgr, string language)
+        {
+            doc.InnerXml = _ReplaceLanguage(doc.InnerXml, language);
         }
 
     }

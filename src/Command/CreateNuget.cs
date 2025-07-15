@@ -2,13 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Xml;
-using System.Xml.Serialization;
-using static DXLocalizationNugetGenerator.Model.Data;
 
 namespace DXLocalizationNugetGenerator.Command
 {
@@ -21,7 +15,7 @@ namespace DXLocalizationNugetGenerator.Command
         public CreateNuget() : base()
         {
             HasRequiredOption("i|inputNuspecPath=", "The full path of the reference nuget .", t => InputNuspecPath = t);
-            HasRequiredOption("o|outputDirectory=", "The output directory path.", t => OutputDirectory = t);
+            HasRequiredOption("o|outputDirectory=", "The output directory path.", t => OutputDirectory = t);            
         }
 
         #region PARAMETERS
@@ -41,6 +35,7 @@ namespace DXLocalizationNugetGenerator.Command
         /// The nuget packages path.
         /// </value>
         public string InputNuspecPath { get; set; }
+
 
         #endregion PARAMETERS
 

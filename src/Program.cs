@@ -12,14 +12,17 @@ namespace DXLocalizationNugetGenerator
 #if DEBUG
             args = new[] { nameof(CreateNuget),
                 @"-i=D:\Temp\DevExpressLocalizationPackages\nuspec",
-                @"-o=D:\Temp\DevExpressLocalizationPackages\nuget"};
+                @"-o=D:\Temp\DevExpressLocalizationPackages\nuget",
+            };
 
             //args = new[] { nameof(CreateNuspec),
-            //    @"-inputDXNuGetPath=C:\Program Files\DevExpress 24.2\Components\System\Components\packages",
+            //    @"-inputDXNuGetPath=C:\Program Files\DevExpress 25.1\Components\System\Components\packages",
             //    @"-inputLocalizationNetFrameworkPath=D:\Temp\DevExpressLocalizationPackages\sources\Framework",
             //    @"-inputLocalizationNetCorePath=D:\Temp\DevExpressLocalizationPackages\sources\NetCore",
             //    @"-outputLanguageCode=fr",
-            //    @"-outputNuspecPath=D:\Temp\DevExpressLocalizationPackages\nuspec"};
+            //    @"-outputNuspecPath=D:\Temp\DevExpressLocalizationPackages\nuspec",
+            //    @"-r=1" //minor-version
+            //};
 #endif
 
             // locate any commands in the assembly (or use an IoC container, or whatever source)
