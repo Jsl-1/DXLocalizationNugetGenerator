@@ -9,12 +9,15 @@ The DXLocalizationNugetGenerator executable has two commands. The CreateNuspec m
 
 Create nuspec files before the NuGet packages creation. You will need:
 * --inputDXNuGetPath - path to DevExpress Nuget packages
-* --inputLocalizationPath - path to DevExpress localization libraries from DevExpress Localization Service
+* --inputLocalizationNetFrameworkPath - path to the .NET Framework DevExpress localization libraries from DevExpress Localization Service
+* --inputLocalizationNetCorePath - path to the .NET Core DevExpress localization libraries from DevExpress Localization Service
 * --outputLanguageCode - target two letter language code
-* --outputNuspecPath - target nuspec path.
+* --outputNuspecPath - target nuspec path
+* --revision (-r) - optional revision version number, appended to the DevExpress version (e.g. `25.2.3.1`). It allows publishing several localization package versions for the same DevExpress version, and makes the generated packages compatible with DevExpress hot fixes and minor updates
+* --packageIdPrefix (-p) - optional prefix added to the generated package ids (e.g. `ApiAndyou` produces `ApiAndyou.DevExpress.Win.fr`). It keeps the generated packages distinguishable from the official DevExpress ones. Empty by default.
 
 ```
-.\DXLocalizationNugetGenerator.exe CreateNuspec --inputDXNuGetPath="C:\Program Files (x86)\DevExpress 20.2\Components\System\Components\packages" --inputLocalizationPath=D:\Playground\devexpress-nuget-localization\source\localization --outputLanguageCode=cs --outputNuspecPath=D:\Playground\devexpress-nuget-localization\target\nuspec
+.\DXLocalizationNugetGenerator.exe CreateNuspec --inputDXNuGetPath="C:\Program Files\DevExpress 25.2\Components\System\Components\packages" --inputLocalizationNetFrameworkPath=D:\Playground\devexpress-nuget-localization\source\localization\Framework --inputLocalizationNetCorePath=D:\Playground\devexpress-nuget-localization\source\localization\NetCore --outputLanguageCode=cs --outputNuspecPath=D:\Playground\devexpress-nuget-localization\target\nuspec -r=1 -p=ApiAndyou
 ```
 
 ### Create NuGet packages
